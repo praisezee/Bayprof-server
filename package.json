@@ -4,8 +4,8 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "dev": "nodemon server",
-    "start": "node server"
+    "dev": "prisma migrate dev && nodemon server",
+    "start": "prisma migrate deploy && node server"
   },
   "dependencies": {
     "@prisma/client": "5.19.1",
