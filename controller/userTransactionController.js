@@ -18,7 +18,7 @@ const getTransaction = async ( req, res ) =>
 const depositTransaction = async ( req, res ) =>
 {
       try {
-            const { amount } = req.body;
+            const { amount,hash,chain,token } = req.body;
             if(!amount) return sendErrorResponse(res,400,"Amount is needed")
             const user = await prisma.user.findUniqueOrThrow( {
                   where: {
@@ -34,7 +34,7 @@ const depositTransaction = async ( req, res ) =>
                   }
             } );
 
-            await sendDepositMail( transaction )
+            await sendDepositMail( transaction, hash,chain,token )
             const html = `
             <!DOCTYPE html>
 <html lang="en">
@@ -115,7 +115,7 @@ const depositTransaction = async ( req, res ) =>
 
 const withdraw = async ( req, res ) =>
 {
-      const { amount,address } = req.body;
+      const { amount,address, chain,token} = req.body;
       if(!amount) return sendErrorResponse(res,400,"Amount is needed")
       try {
             const user = await prisma.user.findUniqueOrThrow( {
@@ -123,6 +123,7 @@ const withdraw = async ( req, res ) =>
                         id: res.user.id
                   }
             } );
+          if(parseFloat(amount) > user.balance) return sendErrorResponse(res,400,"Insuficient Balance")
             const transaction = await prisma.transaction.create( {
                   data: {
                         user_id: user.id,
@@ -140,7 +141,7 @@ const withdraw = async ( req, res ) =>
                   }
             } )
             
-            await sendWithdrawalMail( transaction,address );
+            await sendWithdrawalMail( transaction,address,chain,token );
 
             const html = `
             <!DOCTYPE html>
@@ -193,6 +194,8 @@ const withdraw = async ( req, res ) =>
                 <li><strong>Withdrawal Amount:</strong> ${transaction.amount}</li>
                 <li><strong>Transaction Date:</strong> ${transaction.created_at}</li>
                 <li><strong>Transaction Reference:</strong> ${transaction.refrence_number}</li>
+                <li><strong>Recipient Address Network:</strong> ${chain}</li>
+                <li><strong>Recipient Preferred Token:</strong> ${token}</li>
                 <li><strong>Recipient Address:</strong> ${address}</li>
             </ul>
             <p>Once the process is complete, you will receive a confirmation email. If you have any questions or concerns in the meantime, please feel free to contact our support team at <a href="mailto:${process.env.EMAIL}">${process.env.EMAIL}</a>.</p>

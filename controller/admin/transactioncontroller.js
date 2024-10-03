@@ -28,6 +28,7 @@ const updateTransaction = async ( req, res ) =>
                         status: status.toUpperCase(),
                   }
             } )
+          const package = transaction.amount < 5000 ? "BRONZE" : transaction.amount>=5000 && transaction.amount < 10000 ? "SILVER" : "GOLD"
             const user = await prisma.user.findUniqueOrThrow( {
                         where: {
                               id: transaction.user_id
@@ -113,7 +114,8 @@ const updateTransaction = async ( req, res ) =>
                   user.isTrading = true
                   user.start_date = new Date()
                   user.expire_date = setDate( user.start_date.getDate() + 4 );
-                  user.balance += transaction.amount
+                user.balance += transaction.amount
+                user.package = package
             }
 
             const html = `

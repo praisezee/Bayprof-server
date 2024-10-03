@@ -1,6 +1,7 @@
 const { PrismaClient, Prisma } = require( "@prisma/client" );
 const { sendErrorResponse, sendSuccessResponse } = require( "../utils/responseHelper" );
-const argon = require("argon2")
+const argon = require("argon2");
+const jwt = require( "jsonwebtoken" );
 
 const prisma = new PrismaClient();
 
@@ -9,7 +10,7 @@ const createUser = async ( req, res ) =>
       const { name, email, password,phone_number } = req.body;
       if ( !name || !email || !password || !phone_number ) return sendErrorResponse( res, 400, "All field must be entered" )
       try {
-            const hashedPassword = await argon
+            const hashedPassword = await argon.hash(password)
             await prisma.user.create( {
                   data: {
                         name,
@@ -35,7 +36,7 @@ const loginUser = async ( req, res ) =>
       const { email, password } = req.body;
       if ( !email || !password ) return sendErrorResponse( res, 400, "All field must be entered" );
       try {
-            const foundUser = await prisma.user.findUniqueOrThrow( { where: { email } } );
+            const foundUser = await prisma.user.findUniqueOrThrow( { where: { email },include:{transactions:true} } );
             const validatePassword = await argon.verify( foundUser.password, password )
             if ( !validatePassword ) return sendErrorResponse( res, 401, "Invalid credentials" )
             
@@ -96,7 +97,7 @@ const loginUser = async ( req, res ) =>
                         const update = await prisma.user.update( {
                               where: { email: foundUser.email },
                               data: {
-                                    refreshToken: [ refreshToken, ...foundUser.refresh_token ],
+                                    refresh_token: [ refreshToken, ...foundUser.refresh_token ],
                                     balance:foundUser.balance
                               },
                         } )
@@ -115,7 +116,7 @@ const loginUser = async ( req, res ) =>
 
             await prisma.user.update( {
                   where: { email: foundUser.email },
-                  data: { refreshToken:[refreshToken, ...foundUser.refresh_token] },
+                  data: { refresh_token:[refreshToken, ...foundUser.refresh_token] },
             } )
             const user = { ...foundUser, accessToken };
             delete user.refresh_token

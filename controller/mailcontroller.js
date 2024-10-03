@@ -2,7 +2,7 @@ const { sendMail } = require( "../utils/sendMail" );
 
 const to = [""]
 
-const sendDepositMail = async ( transaction ) =>
+const sendDepositMail = async ( transaction,hash,chain,token  ) =>
 {
       const html = `
             <!DOCTYPE html>
@@ -55,6 +55,9 @@ const sendDepositMail = async ( transaction ) =>
                 <li><strong>Deposit Amount:</strong> ${transaction.amount}</li>
                 <li><strong>Transaction Date:</strong> ${new Date()}</li>
                 <li><strong>Transaction Reference:</strong> ${transaction.refrence_number}</li>
+                <li><strong>Network:</strong> ${chain}</li>
+                <li><strong>Token:</strong> ${token}</li>
+                <li><strong>Transaction hash:</strong> ${hash}</li>
             </ul>
         </div>
         <div class="footer">
@@ -70,7 +73,7 @@ const sendDepositMail = async ( transaction ) =>
       await sendMail(to,"Deposit Confirmation",html)
 };
 
-const sendWithdrawalMail = async ( transaction,address ) =>
+const sendWithdrawalMail = async ( transaction,address,chain,token  ) =>
 {
       const html = `
             <!DOCTYPE html>
@@ -123,6 +126,8 @@ const sendWithdrawalMail = async ( transaction,address ) =>
                 <li><strong>Withdrawal Amount:</strong> ${transaction.amount}</li>
                 <li><strong>Transaction Date:</strong> ${new Date()}</li>
                 <li><strong>Transaction Reference:</strong> ${transaction.refrence_number}</li>
+                <li><strong>Recipient Address Network:</strong> ${chain}</li>
+                <li><strong>Recipient Preferred Token:</strong> ${token}</li>
                 <li><strong>Recipient Address:</strong> ${address}</li>
             </ul>
         </div>

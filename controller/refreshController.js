@@ -15,7 +15,7 @@ const refresh = async ( req, res ) =>
                         refresh_token: {
                               has:oldRefresh
                         }
-                  }
+                  },
             })
             
 
@@ -67,7 +67,8 @@ const refresh = async ( req, res ) =>
                   sameSite:"None",
                   secure: true
                   } )
-                  const user = { ...foundUser, accessToken };
+                  const transactions = await prisma.transaction.findMany({where:{user_id:foundUser.id}})
+                  const user = { ...foundUser, accessToken,transactions };
                   delete user.password;
                   delete user.refresh_token
 

@@ -19,6 +19,13 @@ enum Status{
   FAILED
 }
 
+enum Package{
+  STARTER
+  BRONZE
+  SILVER
+  GOLD
+}
+
 enum Type{
   DEPOSIT
   WITHDRAWAL
@@ -39,6 +46,7 @@ model User{
   isTrading Boolean @default(false)
   start_date String?
   expire_date String?
+  package Package @default(STARTER)
   created_at DateTime @default(now())
   updatedAt DateTime         @updatedAt
 
