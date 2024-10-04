@@ -6,8 +6,12 @@ const prisma = new PrismaClient();
 const getUsers = async ( req, res ) =>
 {
       try {
-            const user = await prisma.user.findMany();
-            return sendSuccessResponse( res,200,"successful",{user} );
+            const users = await prisma.user.findMany( {
+                  include: {
+                        transactions:true
+                  }
+            } );
+            return sendSuccessResponse( res,200,"successful",{users} );
       } catch (error) {
             sendErrorResponse( res, 500, "Internal server error", { error } );
       }
@@ -18,8 +22,13 @@ const getSingleUser = async ( req, res ) =>
       try {
             const { id } = req.params;
             const user = await prisma.user.findUniqueOrThrow( {
-                  where:{id},
+                  where: { id },
+                  include: {
+                        transactions:true
+                  }
             } )
+            delete user.password
+            delete user.refresh_token
             return sendSuccessResponse( res, 200, "successful", { user } );
       }  catch (e) {
             if (e instanceof Prisma.PrismaClientKnownRequestError) {
@@ -35,6 +44,7 @@ const deleteUser = async ( req, res ) =>
 {
       try {
             const { id } = req.params;
+            await prisma.transaction.deleteMany( { where: { user_id: id } } );
             const user = await prisma.user.delete( {
                   where:{id},
             } )

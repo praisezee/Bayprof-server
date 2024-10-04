@@ -1,8 +1,8 @@
-const addDays = ( date, days=4 ) =>
+const addDays = ( days=4 ) =>
 {
-      const result = new Date( date );
+      const result = new Date( );
       result.setDate( result.getDate() + days );
-      return result;
+      return result.toString();
 };
 
 const checkExpiration = ( currentDate, expiresDate ) =>
@@ -11,4 +11,6 @@ const checkExpiration = ( currentDate, expiresDate ) =>
             return false;
       };
       
-}
+};
+
+module.exports = {addDays,checkExpiration}

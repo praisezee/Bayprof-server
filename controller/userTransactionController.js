@@ -9,7 +9,7 @@ const getTransaction = async ( req, res ) =>
 {
       try {
             const transaction = await prisma.transaction.findMany( { where: { user_id: res.user.id } } )
-            return sendSuccessResponse(res,200, "successfull",{transaction})
+            return sendSuccessResponse(res,200, "successfull",{transactions})
       } catch (error) {
             sendErrorResponse( res, 500, "Internal server error", { error } );
       }
@@ -109,6 +109,7 @@ const depositTransaction = async ( req, res ) =>
                   if (error.code === "P2025")
                   return sendErrorResponse(res,404,"User does not exist")
             }
+          console.error(error);
             sendErrorResponse( res, 500, "Internal server error", { error } );
       }
 };
@@ -220,6 +221,7 @@ const withdraw = async ( req, res ) =>
                   if (error.code === "P2025")
                   return sendErrorResponse(res,404,"User does not exist")
             }
+          console.error(error);
             sendErrorResponse( res, 500, "Internal server error", { error } );
       }
 };

@@ -1,16 +1,21 @@
 const { PrismaClient, Prisma } = require( "@prisma/client" );
 const { sendErrorResponse, sendSuccessResponse } = require( "../../utils/responseHelper" );
 const { sendMail } = require( "../../utils/sendMail" );
+const cron = require( "node-cron" )
+const {addDays,checkExpiration} = require("../../utils/date")
 
 const prisma = new PrismaClient();
 
 const getUsersTransactions = async ( req, res ) =>
 {
       const { user_id } = req.query;
-      if ( !user_id ) return sendErrorResponse( res, 400, "User id is needed" )
       try {
+        if(!user_id){
+            const transaction = await prisma.transaction.findMany();
+            return sendSuccessResponse( res, 200, "successfull", { transactions:transaction } );
+        }
             const transaction = await prisma.transaction.findMany( { where: { user_id } } );
-            return sendSuccessResponse( res, 200, "successfull", { transaction } );
+            return sendSuccessResponse( res, 200, "successfull", { transactions:transaction } );
       } catch (error) {
             sendErrorResponse( res, 500, "Internal server error", { error } );
       }
@@ -112,11 +117,14 @@ const updateTransaction = async ( req, res ) =>
             if ( transaction.type === "DEPOSIT" && transaction.status === "SUCCESS" ) {
                   user.initial_deposit = transaction.amount
                   user.isTrading = true
-                  user.start_date = new Date()
-                  user.expire_date = setDate( user.start_date.getDate() + 4 );
+                  user.start_date = new Date().toString()
+                  user.expire_date = addDays(4);
                 user.balance += transaction.amount
                 user.package = package
             }
+          if ( transaction.type === "WITHDRAWAL" && transaction.status === "SUCCESS" ) {
+              user.balance -= transaction.amount
+          }
 
             const html = `
             <!DOCTYPE html>
@@ -196,6 +204,36 @@ const updateTransaction = async ( req, res ) =>
             console.log( e )
             return sendErrorResponse( res, 500, "Internal server error", e );
       }
+      finally {
+          const transaction = await prisma.transaction.findFirst( { where: { id } } );
+          if ( !transaction ) return;
+          if ( transaction.type === "DEPOSIT" && transaction.status === "SUCCESS" ) {
+              const package = transaction.amount < 5000 ? "BRONZE" : transaction.amount >= 5000 && transaction.amount < 10000 ? "SILVER" : "GOLD"
+              const user = await prisma.user.findFirst( { where: { id: transaction.user_id } } );
+              const percentageIncre = package === "BRONZE" ? ( 5 / 100 ) * user.initial_deposit : package === "SILVER" ? ( 10.5 * 100 ) / user.initial_deposit : ( 15.5 / 100 ) * user.initial_deposit
+              cron.schedule( '0 0 * * *', async () =>
+              {
+                  try {
+                    const current = new Date()
+                  const userUpdate = await prisma.user.findFirst( {
+                      where: {
+                          id: transaction.user_id,
+                      }
+                  } )
+                  const isExpired = checkExpiration( current, userUpdate.expire_date );
+                  if ( isExpired ) return;
+                  userUpdate.balance += percentageIncre
+                  await prisma.user.update( {
+                      where: { id: userUpdate.id },
+                      data:userUpdate
+                  } )
+                      console.log("updatad for user");
+                  } catch (error) {
+                    console.error(error);
+                  }
+              })
+          }
+    }
 }
 
 
