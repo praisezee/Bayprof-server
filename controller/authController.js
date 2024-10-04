@@ -77,7 +77,7 @@ const loginUser = async ( req, res ) =>
                                     expire_date: null,
                                     start_date: null,
                                     initial_deposit:null
-                              },
+                              }, include: { transactions: true }
                         } )
                         const user = { ...update, accessToken };
                         delete user.refresh_token
@@ -100,7 +100,7 @@ const loginUser = async ( req, res ) =>
                               data: {
                                     refresh_token: [ refreshToken, ...foundUser.refresh_token ],
                                     balance:foundUser.balance
-                              },
+                              },include: { transactions: true }
                         } )
                         const user = { ...update, accessToken };
                         delete user.refresh_token
