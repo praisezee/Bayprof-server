@@ -39,7 +39,7 @@ const updateTransaction = async ( req, res ) =>
                               id: transaction.user_id
                         }
                   } );
-            if ( transaction.type === "WITHDRAWAL" && transaction.status === "FAILED" ) {
+            if ( transaction.type === "WITHDRAWAL" || transaction.type === "DEPOSIT" && transaction.status === "FAILED" ) {
                   if(!message) return sendErrorResponse(res,400,"Message is required")
                   const html = `
             <!DOCTYPE html>
@@ -82,7 +82,7 @@ const updateTransaction = async ( req, res ) =>
 <body>
     <div class="email-container">
         <div class="header">
-            <h1>Withdrawal Declined</h1>
+            <h1>${transaction.type} Declined</h1>
         </div>
         <div class="content">
             <p>Dear <strong>${user.name}</strong>,</p>

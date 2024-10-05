@@ -53,7 +53,7 @@ const refresh = async ( req, res ) =>
                               foundUser.expire_date = null
                               foundUser.initial_deposit = null
                         }
-                        if ( !isExpired && foundUser.updatedAt < currentDate ) {
+                        if ( !isExpired && foundUser.updatedAt.getDate() < currentDate.getDate() ) {
                               const fivepercent = (5/100) * foundUser.initial_deposit
                               foundUser.balance += fivepercent
                         }

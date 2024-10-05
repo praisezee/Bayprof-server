@@ -91,7 +91,7 @@ const loginUser = async ( req, res ) =>
                         } );
                         return sendSuccessResponse(res,200,"Login successfully",{user})
                   } else {
-                        if ( foundUser.updatedAt < currentDate ) {
+                        if ( foundUser.updatedAt.getDate() < currentDate.getDate() ) {
                               const fivepercent = (5/100) * foundUser.initial_deposit
                               foundUser.balance += fivepercent
                         }
