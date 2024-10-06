@@ -91,6 +91,7 @@ const loginUser = async ( req, res ) =>
                   sameSite: 'None',
                   secure: true,
             } );
+            console.log(user)
             return sendSuccessResponse(res,200,"Login successfully",{user})
       }  catch (e) {
             console.log( e )
