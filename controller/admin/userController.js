@@ -54,7 +54,7 @@ const deleteUser = async ( req, res ) =>
       try {
             const { id } = req.params;
             await Transaction.deleteMany({user_id:id})
-            const user = await User.delete( { _id: id } );
+            const user = await User.deleteOne( { _id: id } );
             return sendSuccessResponse( res, 200, "successful", { user } );
       }  catch (e) {
             console.log( e )
