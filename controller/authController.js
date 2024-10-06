@@ -79,7 +79,7 @@ const loginUser = async ( req, res ) =>
                   }
             }
 
-            foundUser.refresh_token = [ refreshToken, ...foundUser.refresh_token ]
+            foundUser.refresh_token = refreshToken
             await foundUser.save()
             const user = { ...foundUser._doc, accessToken,id:foundUser._id,transactions };
             delete user.refresh_token
