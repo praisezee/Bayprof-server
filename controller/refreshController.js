@@ -1,8 +1,7 @@
-const { PrismaClient,Prisma } = require( '@prisma/client' );
 const jwt = require( "jsonwebtoken" );
 const { checkExpiration } = require( '../utils/date' );
-
-const prisma = new PrismaClient();
+const User = require( '../model/User' );
+const Transaction = require( '../model/Transaction' );
 
 const refresh = async ( req, res ) =>
 {
@@ -11,13 +10,7 @@ const refresh = async ( req, res ) =>
             if ( !cookies?.refreshToken ) return res.sendStatus( 401 );
             const oldRefresh = cookies.refreshToken;
 
-            const foundUser = await prisma.user.findFirstOrThrow( {
-                  where: {
-                        refresh_token: {
-                              has:oldRefresh
-                        }
-                  },
-            })
+            const foundUser = await User.find({refresh_token:oldRefresh})
             
 
             jwt.verify( oldRefresh, process.env.REFRESH_TOKEN, async ( err, decoded ) =>
@@ -59,7 +52,7 @@ const refresh = async ( req, res ) =>
                         }
                   }
                   
-                  await prisma.user.update( { where: { email: foundUser.email }, data: foundUser } )
+                  await foundUser.save()
 
                   
                   res.cookie( 'refreshToken', refreshToken, {
@@ -68,8 +61,11 @@ const refresh = async ( req, res ) =>
                   sameSite:"None",
                   secure: true
                   } )
-                  const transactions = await prisma.transaction.findMany({where:{user_id:foundUser.id}})
-                  const user = { ...foundUser, accessToken,transactions };
+                  const transactionsinit = await Transaction.find( { user_id: foundUser.id } )
+                  const transactions = transactionsinit.map(({_id,_doc,...rest})=>({
+                        id:_id,..._doc
+                  }))
+                  const user = { ...foundUser._doc, accessToken,transactions };
                   delete user.password;
                   delete user.refresh_token
 
@@ -77,10 +73,6 @@ const refresh = async ( req, res ) =>
             })
 
       } catch ( e ) {
-            if (e instanceof Prisma.PrismaClientKnownRequestError) {
-                  if (e.code === "P2025")
-                  return res.sendStatus( 403 );
-            }
             return res.status(500).json({message:"internal server error", error:e})
       }
 };

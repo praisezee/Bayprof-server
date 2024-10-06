@@ -1,14 +1,17 @@
-const { PrismaClient, Prisma } = require( "@prisma/client" );
+
 const { sendErrorResponse, sendSuccessResponse } = require( "../utils/responseHelper" );
 const {sendDepositMail,sendWithdrawalMail} = require( "./mailcontroller" );
 const { sendMail } = require( "../utils/sendMail" );
-
-const prisma = new PrismaClient();
+const Transaction = require( "../model/Transaction" );
+const User = require( "../model/User" );
 
 const getTransaction = async ( req, res ) =>
 {
       try {
-            const transaction = await prisma.transaction.findMany( { where: { user_id: res.user.id } } )
+          const transactioninit = await Transaction.find( { user_id: res.user.id } ).exec();
+          const transactions = transactioninit.map( ( _id,...rest ) => ( {
+              id:_id,...rest
+          }))
             return sendSuccessResponse(res,200, "successfull",{transactions})
       } catch (error) {
             sendErrorResponse( res, 500, "Internal server error", { error } );
@@ -20,18 +23,13 @@ const depositTransaction = async ( req, res ) =>
       try {
             const { amount,hash,chain,token } = req.body;
             if(!amount) return sendErrorResponse(res,400,"Amount is needed")
-            const user = await prisma.user.findUniqueOrThrow( {
-                  where: {
-                        id: res.user.id
-                  }
-            } );
+          const user = await User.findOne( { _id: res.user.id } );
+          if ( !user ) return sendErrorStatus( res, 401, "Unauthorized" );
 
-            const transaction = await prisma.transaction.create( {
-                  data: {
-                        user_id: res.user.id,
-                        amount: parseFloat( amount ),
-                        type: "DEPOSIT"
-                  }
+            const transaction = await Transaction.create( {
+                user_id: res.user.id,
+                amount: parseFloat( amount ),
+                type: "DEPOSIT"
             } );
 
             await sendDepositMail( transaction, hash,chain,token )
@@ -102,14 +100,10 @@ const depositTransaction = async ( req, res ) =>
             `
             await sendMail( user.email, "Deposit in progress", html )
             
-            return sendSuccessResponse( res, 201, "Transaction in progress", { transaction } );
+            return sendSuccessResponse( res, 201, "Transaction in progress", { transaction:{...transaction._doc,id:transaction._id} } );
 
       } catch ( error ) {
-            if (error instanceof Prisma.PrismaClientKnownRequestError) {
-                  if (error.code === "P2025")
-                  return sendErrorResponse(res,404,"User does not exist")
-            }
-          console.error(error);
+          console.log(error)
             sendErrorResponse( res, 500, "Internal server error", { error } );
       }
 };
@@ -119,28 +113,16 @@ const withdraw = async ( req, res ) =>
       const { amount,address, chain,token} = req.body;
       if(!amount) return sendErrorResponse(res,400,"Amount is needed")
       try {
-            const user = await prisma.user.findUniqueOrThrow( {
-                  where: {
-                        id: res.user.id
-                  }
-            } );
+            const user = await User.findOne( { _id: res.user.id } ).exec();
+          if ( !user ) return sendErrorStatus( res, 401, "Unauthorized" );
           if(parseFloat(amount) > user.balance) return sendErrorResponse(res,400,"Insuficient Balance")
-            const transaction = await prisma.transaction.create( {
-                  data: {
+            const transaction = await Transaction.create( {
                         user_id: user.id,
                         amount: parseFloat( amount ),
                         type: "WITHDRAWAL"
-                  }
             } )
-            
-            await prisma.user.update( {
-                  where: {
-                        id:res.user.id
-                  },
-                  data: {
-                        balance: user.balance - parseFloat( amount )
-                  }
-            } )
+          user.balance -= parseFloat( amount );
+          await user.save()
             
             await sendWithdrawalMail( transaction,address,chain,token );
 
@@ -214,13 +196,9 @@ const withdraw = async ( req, res ) =>
             `
             await sendMail( user.email, "Deposit in progress", html )
             
-            return sendSuccessResponse( res, 201, "Transaction in progress", { transaction } );
+            return sendSuccessResponse( res, 201, "Transaction in progress", { transaction:{...transaction._doc,id:transaction._id} } );
 
       } catch ( error ) {
-            if (error instanceof Prisma.PrismaClientKnownRequestError) {
-                  if (error.code === "P2025")
-                  return sendErrorResponse(res,404,"User does not exist")
-            }
           console.error(error);
             sendErrorResponse( res, 500, "Internal server error", { error } );
       }

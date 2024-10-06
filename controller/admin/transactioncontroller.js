@@ -1,21 +1,30 @@
-const { PrismaClient, Prisma } = require( "@prisma/client" );
+
 const { sendErrorResponse, sendSuccessResponse } = require( "../../utils/responseHelper" );
 const { sendMail } = require( "../../utils/sendMail" );
 const cron = require( "node-cron" )
-const {addDays,checkExpiration} = require("../../utils/date")
+const {addDays,checkExpiration} = require("../../utils/date");
+const Transaction = require( "../../model/Transaction" );
+const User = require( "../../model/User" );
 
-const prisma = new PrismaClient();
 
 const getUsersTransactions = async ( req, res ) =>
 {
       const { user_id } = req.query;
       try {
         if(!user_id){
-            const transaction = await prisma.transaction.findMany();
-            return sendSuccessResponse( res, 200, "successfull", { transactions:transaction } );
+            const transaction = await Transaction.find()
+            const transactions = transaction.map( ( { _id,_doc, ...rest } ) => ( {
+                id: _id,
+            ..._doc
+            }))
+            return sendSuccessResponse( res, 200, "successfull", { transactions } );
         }
-            const transaction = await prisma.transaction.findMany( { where: { user_id } } );
-            return sendSuccessResponse( res, 200, "successfull", { transactions:transaction } );
+          const transaction = await Transaction.find( { user_id } )
+          const transactions = transaction.map( ( { _id,_doc, ...rest } ) => ( {
+                id: _id,
+            ..._doc
+            }))
+            return sendSuccessResponse( res, 200, "successfull", { transactions } );
       } catch (error) {
             sendErrorResponse( res, 500, "Internal server error", { error } );
       }
@@ -27,18 +36,10 @@ const updateTransaction = async ( req, res ) =>
       const {status,message} = req.body
       if ( !id || !status ) return sendErrorResponse( res, 400, "Transaction id and status is required" );
       try {
-            const transaction = await prisma.transaction.update( {
-                  where: { id },
-                  data: {
-                        status: status.toUpperCase(),
-                  }
-            } )
+          const transaction = await Transaction.findOne( { _id: id })
           const package = transaction.amount < 5000 ? "BRONZE" : transaction.amount>=5000 && transaction.amount < 10000 ? "SILVER" : "GOLD"
-            const user = await prisma.user.findUniqueOrThrow( {
-                        where: {
-                              id: transaction.user_id
-                        }
-                  } );
+          const user = await User.findOne( { _id: transaction.user_id } )
+          if(!user) return sendErrorResponse(res,404,"USer does not exist")
             if ( transaction.type === "WITHDRAWAL" || transaction.type === "DEPOSIT" && transaction.status === "FAILED" ) {
                   if(!message) return sendErrorResponse(res,400,"Message is required")
                   const html = `
@@ -110,8 +111,10 @@ const updateTransaction = async ( req, res ) =>
 </html>
 
             `
-                  user.balance += transaction.amount
-                  await sendMail( user.email, "Withdrawal failed", html );
+                if(transaction.type === "WITHDRAWAL"){
+                    user.balance += transaction.amount;
+                }
+                  await sendMail( user.email, `${transaction.type} failed`, html );
             }
 
             if ( transaction.type === "DEPOSIT" && transaction.status === "SUCCESS" ) {
@@ -191,42 +194,34 @@ const updateTransaction = async ( req, res ) =>
 </html>
 
             `
-            await prisma.user.update({where:{id:transaction.user_id},data:user})
+          await user.save()
+          await transaction.save()
+
+          await User.updateOne({_id:transaction.user_id},user).exec()
 
             await sendMail( user.email, "Transaction approved", html );
-            return sendSuccessResponse( res, 200, "Successfull", { transaction } );
+            return sendSuccessResponse( res, 200, "Successfull", { transaction:{...transaction._doc,id:transaction._id} } );
 
       }  catch (e) {
-            if (e instanceof Prisma.PrismaClientKnownRequestError) {
-                  if (e.code === "P2025")
-                  return sendErrorResponse(res,404,"Merchant does not exist")
-            }
             console.log( e )
             return sendErrorResponse( res, 500, "Internal server error", e );
       }
       finally {
-          const transaction = await prisma.transaction.findFirst( { where: { id } } );
+          const transaction = await Transaction.findOne( { _id: id })
           if ( !transaction ) return;
           if ( transaction.type === "DEPOSIT" && transaction.status === "SUCCESS" ) {
               const package = transaction.amount < 5000 ? "BRONZE" : transaction.amount >= 5000 && transaction.amount < 10000 ? "SILVER" : "GOLD"
-              const user = await prisma.user.findFirst( { where: { id: transaction.user_id } } );
+              const user = await User.findOne( { _id: transaction.user_id } )
+                if(!user) return sendErrorResponse(res,404,"USer does not exist")
               const percentageIncre = package === "BRONZE" ? ( 5 / 100 ) * user.initial_deposit : package === "SILVER" ? ( 10.5 * 100 ) / user.initial_deposit : ( 15.5 / 100 ) * user.initial_deposit
               cron.schedule( '0 0 * * *', async () =>
               {
                   try {
                     const current = new Date()
-                  const userUpdate = await prisma.user.findFirst( {
-                      where: {
-                          id: transaction.user_id,
-                      }
-                  } )
-                  const isExpired = checkExpiration( current, userUpdate.expire_date );
+                  const isExpired = checkExpiration( current, user.expire_date );
                   if ( isExpired ) return;
-                  userUpdate.balance += percentageIncre
-                  await prisma.user.update( {
-                      where: { id: userUpdate.id },
-                      data:userUpdate
-                  } )
+                      user.balance += percentageIncre
+                      await user.save()
                       console.log("updatad for user");
                   } catch (error) {
                     console.error(error);

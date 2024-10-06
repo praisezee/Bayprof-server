@@ -1,16 +1,20 @@
 require( "dotenv" ).config();
 const express = require( "express" );
+const mongoose = require( 'mongoose' );
 const cors = require( "cors" );
 const cookiePraser = require( "cookie-parser" );
 const credentials = require( "./middleware/credentials" );
 const corsOption = require( "./config/corsOptions" );
 const { verifyJwt } = require( "./middleware/auth" );
+const connectDB = require( './config/connectDb' );
 
 
 const app = express();
 const PORT = process.env.PORT || 3500;
 
 // Middlewares
+
+connectDB();
 app.use(credentials);
 app.use( cors( corsOption ) );
 app.use(express.urlencoded({ extended: true, limit: "200mb" }));
@@ -36,4 +40,8 @@ app.use( '/transaction', require( './routes/transaction' ) );
 
 
 
-app.listen( PORT, () => console.log( `Server running on port ${ PORT }` ) );
+mongoose.connection.once( 'open', () =>
+{
+      console.log( "Connected to MongoDB" );
+      app.listen( PORT, () => console.log( `Server running on ${ PORT }` ) );
+})
