@@ -194,7 +194,7 @@ const updateTransaction = async ( req, res ) =>
 </html>
 
             `
-            transaction = status.toUpperCase();
+            transaction.status= status.toUpperCase();
           await user.save()
           await transaction.save()
 
