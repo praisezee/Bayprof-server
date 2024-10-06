@@ -10,9 +10,11 @@ const refresh = async ( req, res ) =>
             if ( !cookies?.refreshToken ) return res.sendStatus( 401 );
             const oldRefresh = cookies.refreshToken;
 
-            const foundUser = await User.find({refresh_token:oldRefresh})
+            const foundUser = await User.findOne( {
+                  refresh_token: oldRefresh,
+            }).exec()
             
-
+console.log(foundUser);
             jwt.verify( oldRefresh, process.env.REFRESH_TOKEN, async ( err, decoded ) =>
             {
                   if ( err || foundUser.email !== decoded.email ) return res.status( 403 );
@@ -35,7 +37,7 @@ const refresh = async ( req, res ) =>
 
                   //removal of previous refresh token from the database
                   const token = foundUser.refresh_token.filter( refresh => refresh !== oldRefresh )
-                  foundUser.refresh_token = [ ...token, refreshToken ]
+                  foundUser.refresh_token = refreshToken 
                   
                   if ( foundUser.isTrading ) {
                         const currentDate = new Date();
@@ -73,6 +75,7 @@ const refresh = async ( req, res ) =>
             })
 
       } catch ( e ) {
+            console.log(e)
             return res.status(500).json({message:"internal server error", error:e})
       }
 };

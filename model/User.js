@@ -36,7 +36,7 @@ const userSchema = new Schema( {
             default: false
       },
       verification_code: String,
-      refresh_token: [ String ],
+      refresh_token: String ,
       isTrading: {
             type: Boolean,
             default: false
