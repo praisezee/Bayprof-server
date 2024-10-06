@@ -40,7 +40,7 @@ const updateTransaction = async ( req, res ) =>
           const package = transaction.amount < 5000 ? "BRONZE" : transaction.amount>=5000 && transaction.amount < 10000 ? "SILVER" : "GOLD"
           const user = await User.findOne( { _id: transaction.user_id } )
           if(!user) return sendErrorResponse(res,404,"USer does not exist")
-            if ( transaction.type === "WITHDRAWAL" || transaction.type === "DEPOSIT" && transaction.status === "FAILED" ) {
+            if ( transaction.type === "WITHDRAWAL" || transaction.type === "DEPOSIT" && status.toUpperCase() === "FAILED" ) {
                   if(!message) return sendErrorResponse(res,400,"Message is required")
                   const html = `
             <!DOCTYPE html>
@@ -117,7 +117,7 @@ const updateTransaction = async ( req, res ) =>
                   await sendMail( user.email, `${transaction.type} failed`, html );
             }
 
-            if ( transaction.type === "DEPOSIT" && transaction.status === "SUCCESS" ) {
+            if ( transaction.type === "DEPOSIT" && status.toUpperCase() === "SUCCESS" ) {
                   user.initial_deposit = transaction.amount
                   user.isTrading = true
                   user.start_date = new Date().toString()
@@ -125,7 +125,7 @@ const updateTransaction = async ( req, res ) =>
                 user.balance += transaction.amount
                 user.package = package
             }
-          if ( transaction.type === "WITHDRAWAL" && transaction.status === "SUCCESS" ) {
+          if ( transaction.type === "WITHDRAWAL" && status.toUpperCase() === "SUCCESS" ) {
               user.balance -= transaction.amount
           }
 
@@ -194,10 +194,11 @@ const updateTransaction = async ( req, res ) =>
 </html>
 
             `
+            transaction = status.toUpperCase();
           await user.save()
           await transaction.save()
 
-          await User.updateOne({_id:transaction.user_id},user).exec()
+         // await User.updateOne({_id:transaction.user_id},user).exec()
 
             await sendMail( user.email, "Transaction approved", html );
             return sendSuccessResponse( res, 200, "Successfull", { transaction:{...transaction._doc,id:transaction._id} } );
@@ -219,6 +220,7 @@ const updateTransaction = async ( req, res ) =>
                   try {
                     const current = new Date()
                   const isExpired = checkExpiration( current, user.expire_date );
+                        if (user.updatedAt.getDate() >= current.getDate()) return
                   if ( isExpired ) return;
                       user.balance += percentageIncre
                       await user.save()
