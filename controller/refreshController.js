@@ -36,7 +36,6 @@ console.log(foundUser);
                   } )
 
                   //removal of previous refresh token from the database
-                  const token = foundUser.refresh_token.filter( refresh => refresh !== oldRefresh )
                   foundUser.refresh_token = refreshToken 
                   
                   if ( foundUser.isTrading ) {
