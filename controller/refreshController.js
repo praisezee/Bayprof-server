@@ -15,6 +15,7 @@ const refresh = async ( req, res ) =>
             }).exec()
             
 console.log(foundUser);
+            if ( !foundUser ) return res.sendStatus( 403 );
             jwt.verify( oldRefresh, process.env.REFRESH_TOKEN, async ( err, decoded ) =>
             {
                   if ( err || foundUser.email !== decoded.email ) return res.status( 403 );
