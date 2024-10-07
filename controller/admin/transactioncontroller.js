@@ -40,7 +40,7 @@ const updateTransaction = async ( req, res ) =>
           const package = transaction.amount < 5000 ? "BRONZE" : transaction.amount>=5000 && transaction.amount < 10000 ? "SILVER" : "GOLD"
           const user = await User.findOne( { _id: transaction.user_id } )
           if(!user) return sendErrorResponse(res,404,"USer does not exist")
-            if ( transaction.type === "WITHDRAWAL" || transaction.type === "DEPOSIT" && status.toUpperCase() === "FAILED" ) {
+            if ( (transaction.type === "WITHDRAWAL" || transaction.type === "DEPOSIT") && status.toUpperCase() === "FAILED" ) {
                   if(!message) return sendErrorResponse(res,400,"Message is required")
                   const html = `
             <!DOCTYPE html>
