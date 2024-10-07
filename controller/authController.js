@@ -20,6 +20,7 @@ const createUser = async ( req, res ) =>
 
             return sendSuccessResponse( res, 201, "User created" );
       } catch (e) {
+            if(e.code === 11000) return sendErrorResponse(res,409,"User already exist",e)
             return sendErrorResponse(res,500,"Internal server error",e)
       }
 };
