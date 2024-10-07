@@ -125,9 +125,6 @@ const updateTransaction = async ( req, res ) =>
                 user.balance += transaction.amount
                 user.package = package
             }
-          if ( transaction.type === "WITHDRAWAL" && status.toUpperCase() === "SUCCESS" ) {
-              user.balance -= transaction.amount
-          }
 
             const html = `
             <!DOCTYPE html>
