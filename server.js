@@ -24,7 +24,7 @@ app.use( cookiePraser() );
 
 app.get( '/', ( req, res ) =>
 {
-      res.status(301).redirect(process.env.USER_FRONTEND)
+      res.send('Hello World')
 } )
 
 //Admin controller
