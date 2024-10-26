@@ -17,6 +17,7 @@ const PORT = process.env.PORT || 3500;
 connectDB();
 app.use(credentials);
 app.use( cors( corsOption ) );
+app.options("*", cors(corsOption));
 app.use(express.urlencoded({ extended: true, limit: "200mb" }));
 app.use(express.json({limit:"500mb"}));
 
