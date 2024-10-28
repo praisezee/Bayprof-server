@@ -1,18 +1,18 @@
 const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
-  host: process.env.HOST_MAIL,
-  port: process.env.MAIL_PORT,
+  host: "mail.bayprof.com",
+  port: 465,
   auth: {
-    user: process.env.EMAIL,
-    pass: process.env.PASSWORD,
+    user: "admin@bayprof.com",
+    pass: "Qfob1GE+",
   },
   tls: {
     rejectUnauthorized: false,
   },
 } );
 
-const from = `Bayprof Support<${ process.env.EMAIL }>`;
+const from = `Bayprof Support<admin@bayprof.com>`;
 
 const sendMail = async (to, subject, html) => {
   try {
