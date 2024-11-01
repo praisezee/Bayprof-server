@@ -23,7 +23,7 @@ const forgetPassword = async (req,res) =>
                   }
             )
 
-            const resetLink = `${process.env.USER_FRONTEND}/reset?token=${token}`
+            const resetLink = `${process.env.USER_FRONTEND}/reset-password?token=${token}`
 
             const html = `
             <!DOCTYPE html>
