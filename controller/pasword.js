@@ -101,7 +101,7 @@ const resetPassword = async ( req, res ) =>
       const { token, password } = req.body;
       if ( !token || !password ) return sendErrorResponse( res, 400, "Invalid body" );
       try {
-            const foundUser = await User.findOne( { verification_code } ).exec();
+            const foundUser = await User.findOne( { verification_code:token } ).exec();
             if ( !foundUser ) return sendErrorResponse( res, 403, "Unauthorized" );
             jwt.verify( token, process.env.VERIFY_TOKEN, async ( err, decoded ) =>
             {
