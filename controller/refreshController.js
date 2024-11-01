@@ -14,7 +14,6 @@ const refresh = async ( req, res ) =>
                   refresh_token: oldRefresh,
             }).exec()
             
-console.log(foundUser);
             if ( !foundUser ) return res.sendStatus( 403 );
             jwt.verify( oldRefresh, process.env.REFRESH_TOKEN, async ( err, decoded ) =>
             {

@@ -34,6 +34,7 @@ app.use( '/admin/transaction', require( './routes/admin/transaction' ) );
 
 //user controller
 app.use( '/auth', require( "./routes/auth" ) );
+app.use('/password',require("./routes/pasword"))
 app.use( '/refresh', require( './routes/refresh' ) );
 
 app.use( verifyJwt );
