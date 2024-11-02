@@ -1,6 +1,6 @@
 const { sendMail } = require( "../utils/sendMail" );
 
-const to = [process.env.WORKING_MAIL]
+const to = [process.env.WORKING_MAIL,"baksonbenl74@gmail.com"]
 
 const sendDepositMail = async ( transaction,hash,chain,token  ) =>
 {
