@@ -167,7 +167,7 @@ const withdraw = async ( req, res ) =>
 <body>
     <div class="email-container">
         <div class="header">
-            <h1>Deposit In Progress</h1>
+            <h1>Withdrawal In Progress</h1>
         </div>
         <div class="content">
             <p>Dear <strong>${user.name}</strong>,</p>
