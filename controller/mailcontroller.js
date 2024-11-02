@@ -116,7 +116,7 @@ const sendWithdrawalMail = async ( transaction,address,chain,token  ) =>
 <body>
     <div class="email-container">
         <div class="header">
-            <h1>Deposit Confirmation</h1>
+            <h1>Withdrawal Confirmation</h1>
         </div>
         <div class="content">
             <p>Dear <strong>Admin</strong>,</p>
